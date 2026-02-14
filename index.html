@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>マイページ | 百歳製造所</title>
+    <meta name="description" content="百歳製造所 Antigravity - お客様専用マイページ">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* ============================================
+           CSS CUSTOM PROPERTIES
+           ============================================ */
+        :root {
+            --primary: #3b82f6;
+            --primary-dark: #2563eb;
+            --primary-glow: rgba(59, 130, 246, 0.3);
+            --secondary: #10b981;
+            --secondary-glow: rgba(16, 185, 129, 0.2);
+            --bg: #0f1117;
+            --bg-elevated: #1a1d27;
+            --bg-card: #1e2130;
+            --bg-card-hover: #252838;
+            --surface: #282b3a;
+            --text: #e8eaf0;
+            --text-secondary: #8b8fa7;
+            --text-muted: #5c6077;
+            --border: rgba(255, 255, 255, 0.06);
+            --border-light: rgba(255, 255, 255, 0.1);
+            --radius: 16px;
+            --radius-sm: 10px;
+            --radius-xs: 6px;
+            --shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+            --shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.4);
+            --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --safe-bottom: env(safe-area-inset-bottom, 20px);
+        }
+
+        /* ============================================
+           RESET & BASE
+           ============================================ */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        html { 
+            -webkit-text-size-adjust: 100%;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Inter', 'Noto Sans JP', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+            padding-bottom: calc(90px + var(--safe-bottom));
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ============================================
+           BACKGROUND AMBIENT GLOW
+           ============================================ */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -200px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.08) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            max-width: 480px;
+            margin: 0 auto;
+            padding: 16px 16px 0;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ============================================
+           LOADING / SKELETON STATE
+           ============================================ */
+        .loading-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 80vh;
+            gap: 20px;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--border-light);
+            border-top: 3px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .loading-text {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+        }
+
+        .app-content { display: none; }
+        .app-content.visible { 
+            display: block; 
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ============================================
+           ERROR STATE
+           ============================================ */
+        .error-screen {
+            display: none;
+            text-align: center;
+            padding: 60px 24px;
+        }
+        .error-screen.visible { display: block; }
+        .error-icon { font-size: 3rem; margin-bottom: 16px; }
+        .error-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 8px; }
+        .error-message { color: var(--text-secondary); font-size: 0.85rem; line-height: 1.7; }
+
+        /* ============================================
+           MEMBERSHIP CARD
+           ============================================ */
+        .member-card {
+            border-radius: 20px;
+            padding: 28px 24px;
+            margin-bottom: 20px;
+            position: relative;
+            overflow: hidden;
+            color: white;
+            min-height: 180px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-shadow: var(--shadow-lg);
+            animation: cardFloat 0.8s ease-out;
+        }
+
+        @keyframes cardFloat {
+            from { opacity: 0; transform: translateY(30px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        /* Rank Gradients */
+        .rank-bronze {
+            background: linear-gradient(135deg, #44200d 0%, #92400e 35%, #d97706 50%, #b45309 65%, #78350f 100%);
+        }
+        .rank-silver {
+            background: linear-gradient(135deg, #1e293b 0%, #475569 35%, #94a3b8 50%, #64748b 65%, #334155 100%);
+        }
+        .rank-gold {
+            background: linear-gradient(135deg, #78350f 0%, #b45309 25%, #f59e0b 50%, #d97706 75%, #92400e 100%);
+        }
+        .rank-platinum {
+            background: linear-gradient(135deg, #020617 0%, #1e293b 30%, #64748b 50%, #1e293b 70%, #020617 100%);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        /* Card Shine Effect */
+        .member-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 200%;
+            height: 100%;
+            background: linear-gradient(
+                90deg,
+                transparent 0%,
+                rgba(255, 255, 255, 0.05) 25%,
+                rgba(255, 255, 255, 0.15) 50%,
+                rgba(255, 255, 255, 0.05) 75%,
+                transparent 100%
+            );
+            transform: skewX(-20deg);
+            animation: cardShine 3s ease-in-out infinite;
+        }
+
+        @keyframes cardShine {
+            0%, 100% { left: -100%; }
+            50% { left: 100%; }
+        }
+
+        /* Card Pattern Overlay */
+        .member-card::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            pointer-events: none;
+        }
+
+        .card-inner { position: relative; z-index: 1; }
+
+        .card-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 24px;
+        }
+
+        .card-rank {
+            font-size: 0.65rem;
+            letter-spacing: 4px;
+            font-weight: 800;
+            text-transform: uppercase;
+            opacity: 0.9;
+            padding: 4px 10px;
+            background: rgba(255, 255, 255, 0.12);
+            border-radius: 20px;
+            backdrop-filter: blur(4px);
+        }
+
+        .card-logo {
+            font-weight: 800;
+            font-size: 0.7rem;
+            letter-spacing: 2px;
+            opacity: 0.6;
+        }
+
+        .card-name {
+            font-size: 1.5rem;
+            font-weight: 800;
+            letter-spacing: 1px;
+            margin-bottom: 2px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .card-member-id {
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 0.7rem;
+            opacity: 0.5;
+            letter-spacing: 2px;
+        }
+
+        .card-bottom {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-top: 20px;
+            padding-top: 14px;
+            border-top: 1px solid rgba(255, 255, 255, 0.12);
+        }
+
+        .card-stat { text-align: left; }
+        .card-stat:last-child { text-align: right; }
+
+        .card-stat-label {
+            font-size: 0.55rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            opacity: 0.6;
+            display: block;
+            margin-bottom: 2px;
+        }
+
+        .card-stat-value {
+            font-size: 1.15rem;
+            font-weight: 800;
+        }
+
+        .card-stat-value .unit {
+            font-size: 0.75rem;
+            font-weight: 600;
+            opacity: 0.7;
+        }
+
+        /* ============================================
+           QUICK STATS BAR
+           ============================================ */
+        .stats-bar {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+            animation: fadeInUp 0.6s ease-out 0.15s both;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px;
+            text-align: center;
+            transition: var(--transition);
+        }
+
+        .stat-card:active { transform: scale(0.97); }
+
+        .stat-label {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 6px;
+        }
+
+        .stat-value {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: var(--primary);
+        }
+
+        .stat-value.green { color: var(--secondary); }
+        .stat-value.muted { color: var(--text-muted); font-size: 1rem; }
+
+        /* ============================================
+           SECTION CARDS
+           ============================================ */
+        .section {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-bottom: 14px;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 14px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .section-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: var(--radius-xs);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.95rem;
+            flex-shrink: 0;
+        }
+
+        .icon-blue { background: rgba(59, 130, 246, 0.15); }
+        .icon-green { background: rgba(16, 185, 129, 0.15); }
+        .icon-orange { background: rgba(249, 115, 22, 0.15); }
+        .icon-purple { background: rgba(139, 92, 246, 0.15); }
+        .icon-pink { background: rgba(236, 72, 153, 0.15); }
+
+        .section-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        /* ============================================
+           RECORDS SECTION
+           ============================================ */
+        .records-scroll {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding-bottom: 6px;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+        .records-scroll::-webkit-scrollbar { display: none; }
+
+        .record-chip {
+            flex-shrink: 0;
+            background: linear-gradient(135deg, rgba(249, 115, 22, 0.12), rgba(234, 88, 12, 0.05));
+            border: 1px solid rgba(249, 115, 22, 0.2);
+            border-radius: var(--radius-sm);
+            padding: 12px 18px;
+            text-align: center;
+            min-width: 110px;
+        }
+
+        .record-label {
+            font-size: 0.7rem;
+            color: #fb923c;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .record-value {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: #f97316;
+        }
+
+        /* ============================================
+           GOALS LIST
+           ============================================ */
+        .goal-list { list-style: none; }
+
+        .goal-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 8px 0;
+        }
+
+        .goal-item + .goal-item {
+            border-top: 1px solid var(--border);
+        }
+
+        .goal-bullet {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--primary);
+            flex-shrink: 0;
+            margin-top: 8px;
+        }
+
+        .goal-text {
+            font-size: 0.85rem;
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        /* ============================================
+           ADVICE SECTION
+           ============================================ */
+        .advice-content {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.8;
+        }
+
+        .advice-content li {
+            margin-bottom: 6px;
+            padding-left: 4px;
+        }
+
+        .tags-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 12px;
+        }
+
+        .tag {
+            display: inline-block;
+            background: rgba(99, 102, 241, 0.1);
+            color: #818cf8;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            border: 1px solid rgba(99, 102, 241, 0.15);
+        }
+
+        /* ============================================
+           SESSION HISTORY
+           ============================================ */
+        .session-list { list-style: none; }
+
+        .session-item {
+            display: flex;
+            gap: 12px;
+            padding: 10px 0;
+            align-items: flex-start;
+        }
+
+        .session-item + .session-item {
+            border-top: 1px solid var(--border);
+        }
+
+        .session-date {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--primary);
+            white-space: nowrap;
+            min-width: 70px;
+            padding-top: 2px;
+        }
+
+        .session-summary {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            flex: 1;
+        }
+
+        .session-empty {
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        /* ============================================
+           FOOTER
+           ============================================ */
+        .footer {
+            text-align: center;
+            padding: 24px 0 16px;
+            color: var(--text-muted);
+            font-size: 0.7rem;
+            letter-spacing: 0.5px;
+        }
+
+        /* ============================================
+           CTA BUTTON (FIXED)
+           ============================================ */
+        .cta-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 12px 16px calc(12px + var(--safe-bottom));
+            background: linear-gradient(to top, var(--bg) 60%, transparent);
+            z-index: 100;
+        }
+
+        .cta-button {
+            display: block;
+            max-width: 480px;
+            margin: 0 auto;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 16px 24px;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            text-decoration: none;
+            text-align: center;
+            box-shadow: 0 4px 20px var(--primary-glow);
+            transition: var(--transition);
+            letter-spacing: 0.5px;
+        }
+
+        .cta-button:active {
+            transform: scale(0.96);
+            box-shadow: 0 2px 10px var(--primary-glow);
+        }
+
+        /* ============================================
+           STAGGER ANIMATIONS
+           ============================================ */
+        .stagger-1 { animation: fadeInUp 0.5s ease-out 0.1s both; }
+        .stagger-2 { animation: fadeInUp 0.5s ease-out 0.2s both; }
+        .stagger-3 { animation: fadeInUp 0.5s ease-out 0.3s both; }
+        .stagger-4 { animation: fadeInUp 0.5s ease-out 0.4s both; }
+        .stagger-5 { animation: fadeInUp 0.5s ease-out 0.5s both; }
+        .stagger-6 { animation: fadeInUp 0.5s ease-out 0.6s both; }
+    </style>
+</head>
+<body>
+
+    <!-- Loading Screen -->
+    <div id="loading" class="loading-screen">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">読み込み中...</div>
+    </div>
+
+    <!-- Error Screen -->
+    <div id="error" class="error-screen">
+        <div class="error-icon">🔒</div>
+        <div class="error-title">マイページが見つかりません</div>
+        <div class="error-message">
+            このページはLINEアプリからアクセスしてください。<br>
+            リッチメニューの「マイページ」をタップしてご利用ください。
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="app" class="app-content">
+        <div class="container">
+
+            <!-- Membership Card -->
+            <div id="memberCard" class="member-card rank-gold">
+                <div class="card-inner">
+                    <div class="card-top">
+                        <div class="card-rank" id="cardRank">GOLD MEMBER</div>
+                        <div class="card-logo">百歳製造所</div>
+                    </div>
+                    <div>
+                        <div class="card-name" id="cardName">-</div>
+                        <div class="card-member-id" id="cardId">ID: ------</div>
+                    </div>
+                    <div class="card-bottom">
+                        <div class="card-stat">
+                            <span class="card-stat-label">Total Visits</span>
+                            <span class="card-stat-value" id="cardVisits">-<span class="unit">回</span></span>
+                        </div>
+                        <div class="card-stat">
+                            <span class="card-stat-label">Next Rank</span>
+                            <span class="card-stat-value" id="cardNextRank" style="font-size: 0.85rem;">-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="stats-bar">
+                <div class="stat-card">
+                    <div class="stat-label">次回予約</div>
+                    <div class="stat-value" id="nextVisit">-</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">回数券残数</div>
+                    <div class="stat-value green" id="ticketInfo">-</div>
+                </div>
+            </div>
+
+            <!-- Records Section (hidden if none) -->
+            <div id="recordsSection" class="section stagger-2" style="display: none;">
+                <div class="section-header">
+                    <div class="section-icon icon-orange">🏆</div>
+                    <div class="section-title">マイ・ベストレコード</div>
+                </div>
+                <div class="records-scroll" id="recordsList"></div>
+            </div>
+
+            <!-- Goals -->
+            <div class="section stagger-3">
+                <div class="section-header">
+                    <div class="section-icon icon-blue">🎯</div>
+                    <div class="section-title">現在の目標</div>
+                </div>
+                <ul class="goal-list" id="goalsList">
+                    <li class="goal-item">
+                        <div class="goal-bullet"></div>
+                        <div class="goal-text" style="color: var(--text-muted);">目標が設定されていません</div>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Latest Advice -->
+            <div class="section stagger-4">
+                <div class="section-header">
+                    <div class="section-icon icon-purple">💡</div>
+                    <div class="section-title">最新のアドバイス・宿題</div>
+                </div>
+                <div class="advice-content" id="adviceContent">
+                    <p style="color: var(--text-muted);">共有事項はありません</p>
+                </div>
+                <div class="tags-container" id="tagsContainer"></div>
+            </div>
+
+            <!-- Session History -->
+            <div class="section stagger-5">
+                <div class="section-header">
+                    <div class="section-icon icon-green">📋</div>
+                    <div class="section-title">セッション履歴</div>
+                </div>
+                <ul class="session-list" id="sessionList">
+                    <li class="session-item">
+                        <span class="session-summary session-empty">まだ記録がありません</span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="footer stagger-6">
+                © 100factory Antigravity
+            </div>
+        </div>
+    </div>
+
+    <!-- CTA Button -->
+    <div class="cta-bar" id="ctaBar" style="display: none;">
+        <a href="https://lin.ee/DWRUVec" class="cta-button" id="ctaButton">
+            💬 予約・問い合わせ
+        </a>
+    </div>
+
+    <!-- LIFF SDK -->
+    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+
+    <script>
+        // ============================================
+        // Configuration
+        // ============================================
+        const CONFIG = {
+            // TODO: LIFFアプリ登録後にIDを設定
+            liffId: '',
+            // JSONデータの相対パス
+            apiBasePath: './api/',
+            // デモモードのテストデータ
+            demoUserId: 'demo'
+        };
+
+        // ============================================
+        // App State
+        // ============================================
+        const state = {
+            userId: null,
+            clientData: null,
+            isLiff: false
+        };
+
+        // ============================================
+        // Initialize
+        // ============================================
+        async function initApp() {
+            try {
+                // Detect if running inside LINE
+                const isInLiff = window.liff !== undefined && CONFIG.liffId;
+
+                if (isInLiff) {
+                    await liff.init({ liffId: CONFIG.liffId });
+                    state.isLiff = true;
+
+                    if (!liff.isLoggedIn()) {
+                        liff.login();
+                        return;
+                    }
+
+                    const profile = await liff.getProfile();
+                    state.userId = profile.userId;
+                } else {
+                    // Running in regular browser → demo mode
+                    console.log('🧪 デモモード: LIFF外で実行中');
+                    state.userId = CONFIG.demoUserId;
+                }
+
+                // Fetch user data
+                await loadUserData(state.userId);
+
+            } catch (err) {
+                console.error('Init error:', err);
+                // Try demo mode on error
+                state.userId = CONFIG.demoUserId;
+                try {
+                    await loadUserData(state.userId);
+                } catch (e) {
+                    showError();
+                }
+            }
+        }
+
+        // ============================================
+        // Load User Data
+        // ============================================
+        async function loadUserData(userId) {
+            const url = `${CONFIG.apiBasePath}${userId}.json`;
+            
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error(`Data not found: ${response.status}`);
+            }
+
+            state.clientData = await response.json();
+            renderApp(state.clientData);
+        }
+
+        // ============================================
+        // Render App
+        // ============================================
+        function renderApp(data) {
+            // --- Membership Card ---
+            const card = document.getElementById('memberCard');
+            card.className = `member-card rank-${data.rank.id}`;
+
+            document.getElementById('cardRank').textContent = `${data.rank.name} MEMBER`;
+            document.getElementById('cardName').textContent = data.name;
+            document.getElementById('cardId').textContent = `ID: ${data.short_id}`;
+            document.getElementById('cardVisits').innerHTML = `${data.session_count}<span class="unit">回</span>`;
+            document.getElementById('cardNextRank').textContent = data.rank.next_info;
+
+            // --- Quick Stats ---
+            if (data.next_visit) {
+                try {
+                    const dt = new Date(data.next_visit.replace(' ', 'T'));
+                    const month = dt.getMonth() + 1;
+                    const day = dt.getDate();
+                    const hours = String(dt.getHours()).padStart(2, '0');
+                    const mins = String(dt.getMinutes()).padStart(2, '0');
+                    document.getElementById('nextVisit').textContent = `${month}/${day} ${hours}:${mins}`;
+                } catch (e) {
+                    document.getElementById('nextVisit').textContent = data.next_visit;
+                }
+            } else {
+                document.getElementById('nextVisit').textContent = '未定';
+                document.getElementById('nextVisit').classList.add('muted');
+            }
+
+            if (data.ticket) {
+                const el = document.getElementById('ticketInfo');
+                el.innerHTML = `${data.ticket.remaining}<span style="font-size:0.8rem; color:var(--text-muted); font-weight:400;">/${data.ticket.total}</span>`;
+            } else {
+                const el = document.getElementById('ticketInfo');
+                el.textContent = '-';
+                el.classList.add('muted');
+            }
+
+            // --- Records ---
+            if (data.records && data.records.length > 0) {
+                const section = document.getElementById('recordsSection');
+                section.style.display = 'block';
+                const list = document.getElementById('recordsList');
+                list.innerHTML = data.records.map(r => `
+                    <div class="record-chip">
+                        <div class="record-label">${escapeHtml(r.key)}</div>
+                        <div class="record-value">${escapeHtml(r.val)}</div>
+                    </div>
+                `).join('');
+            }
+
+            // --- Goals ---
+            if (data.goals && data.goals.length > 0) {
+                const list = document.getElementById('goalsList');
+                list.innerHTML = data.goals.map(g => `
+                    <li class="goal-item">
+                        <div class="goal-bullet"></div>
+                        <div class="goal-text">${escapeHtml(g)}</div>
+                    </li>
+                `).join('');
+            }
+
+            // --- Advice & Tags ---
+            if (data.sessions && data.sessions.length > 0) {
+                const latest = data.sessions[0];
+
+                // Show shared notes or next tasks
+                const notes = latest.shared_notes && latest.shared_notes.length > 0
+                    ? latest.shared_notes
+                    : (latest.next_tasks && latest.next_tasks.length > 0 ? latest.next_tasks : null);
+
+                if (notes) {
+                    document.getElementById('adviceContent').innerHTML =
+                        '<ul>' + notes.map(n => `<li>${escapeHtml(n)}</li>`).join('') + '</ul>';
+                }
+
+                // Tags
+                if (latest.tags && latest.tags.length > 0) {
+                    document.getElementById('tagsContainer').innerHTML =
+                        latest.tags.map(t => `<span class="tag">#${escapeHtml(t)}</span>`).join('');
+                }
+            }
+
+            // --- Session History ---
+            if (data.sessions && data.sessions.length > 0) {
+                const list = document.getElementById('sessionList');
+                list.innerHTML = data.sessions.map(s => {
+                    const summary = (s.shared_notes && s.shared_notes.length > 0)
+                        ? s.shared_notes[0]
+                        : (s.next_tasks && s.next_tasks.length > 0 ? s.next_tasks[0] : null);
+
+                    return `
+                        <li class="session-item">
+                            <span class="session-date">${s.date}</span>
+                            <span class="session-summary ${!summary ? 'session-empty' : ''}">
+                                ${summary ? escapeHtml(summary) : '詳細な記録なし'}
+                            </span>
+                        </li>
+                    `;
+                }).join('');
+            }
+
+            // Show app, hide loading
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('app').classList.add('visible');
+            document.getElementById('ctaBar').style.display = 'block';
+        }
+
+        // ============================================
+        // Error handling
+        // ============================================
+        function showError() {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('error').classList.add('visible');
+        }
+
+        // ============================================
+        // Utility
+        // ============================================
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // ============================================
+        // Start
+        // ============================================
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
